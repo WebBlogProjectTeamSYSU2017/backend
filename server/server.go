@@ -28,6 +28,10 @@ type DeleteBlogRequest struct {
 	ID string `json:"id"`
 }
 
+type TokenResponse struct {
+	Token string `json:"token"`
+}
+
 //UserLogInRequest 用于用户登录请求
 type UserLogInRequest struct {
 	Password string `json:"password"`
@@ -71,6 +75,15 @@ func DeleteBlogHandler(w http.ResponseWriter, req *http.Request) (bool, interfac
 	body, err := ioutil.ReadAll(req.Body)
 	vars := mux.Vars(req)
 	useremail := vars["email"]
+	// Check token
+	ok, Tuseremail := lib.GetUserEmailFromToken(req.Header.Get("Token"), lib.SignKey)
+	if !ok {
+		return false, "身份验证失败"
+	}
+	if Tuseremail != useremail {
+		return false, "身份验证失败"
+	}
+
 	if ok, _ := dbServer.GetUserFromEmail(useremail); ok != true {
 		return false, "用户不存在"
 	}
@@ -99,6 +112,14 @@ func DeleteBlogHandler(w http.ResponseWriter, req *http.Request) (bool, interfac
 func GetAllBlogPublic(w http.ResponseWriter, req *http.Request) (bool, interface{}) {
 	vars := mux.Vars(req)
 	useremail := vars["email"]
+	// Check token
+	ok, Tuseremail := lib.GetUserEmailFromToken(req.Header.Get("Token"), lib.SignKey)
+	if !ok {
+		return false, "身份验证失败"
+	}
+	if Tuseremail != useremail {
+		return false, "身份验证失败"
+	}
 	if ok, _ := dbServer.GetUserFromEmail(useremail); ok != true {
 		return false, "用户不存在"
 	}
@@ -131,6 +152,15 @@ func GetAllBlogPublic(w http.ResponseWriter, req *http.Request) (bool, interface
 func GetAllBlogFromUserHandler(w http.ResponseWriter, req *http.Request) (bool, interface{}) {
 	vars := mux.Vars(req)
 	useremail := vars["email"]
+	// Check token
+	ok, Tuseremail := lib.GetUserEmailFromToken(req.Header.Get("Token"), lib.SignKey)
+	if !ok {
+		return false, "身份验证失败"
+	}
+	if Tuseremail != useremail {
+		return false, "身份验证失败"
+	}
+
 	if ok, _ := dbServer.GetUserFromEmail(useremail); ok != true {
 		return false, "用户不存在"
 	}
@@ -149,9 +179,19 @@ func GetAllBlogFromUserHandler(w http.ResponseWriter, req *http.Request) (bool, 
 
 //CreateBlogHandler 提供创建博客服务
 func CreateBlogHandler(w http.ResponseWriter, req *http.Request) (bool, interface{}) {
-	body, err := ioutil.ReadAll(req.Body)
 	vars := mux.Vars(req)
 	useremail := vars["email"]
+	// Check token
+	ok, Tuseremail := lib.GetUserEmailFromToken(req.Header.Get("Token"), lib.SignKey)
+	if !ok {
+		return false, "身份验证失败"
+	}
+	if Tuseremail != useremail {
+		return false, "身份验证失败"
+	}
+
+	body, err := ioutil.ReadAll(req.Body)
+
 	if ok, _ := dbServer.GetUserFromEmail(useremail); ok != true {
 		return false, "用户不存在"
 	}
@@ -243,5 +283,23 @@ func UserLoginHandler(w http.ResponseWriter, req *http.Request) (bool, interface
 	if user.Password != userLogInRequest.Password {
 		return false, "密码错误"
 	}
-	return true, ""
+
+	//Token 生命周期起始点
+	token := req.Header.Get("Token")
+	if ok, _ := lib.CheckToken(token); ok != true {
+		//需要重建token
+		newToken, err := lib.GenerateToken(userLogInRequest.Email)
+		if err != nil {
+			return false, "生成Token失败"
+		} else {
+			return true, TokenResponse{
+				Token: newToken,
+			}
+		}
+
+	}
+	//不需要重建Token 使用旧token
+	return true, TokenResponse{
+		Token: token,
+	}
 }
