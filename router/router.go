@@ -1,9 +1,10 @@
 package router
 
 import (
-	"github.com/WebBlogProjectTeamSYSU2017/backend/server"
 	"encoding/json"
 	"net/http"
+
+	"github.com/WebBlogProjectTeamSYSU2017/backend/server"
 
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
@@ -41,7 +42,6 @@ func NewServer() *negroni.Negroni {
 }
 
 func initRoutes(mx *mux.Router, formatter *render.Render) {
-	mx.HandleFunc("/add/{id1}/{id2}", server.AddHandler).Methods("GET")
 	mx.Handle("/signup", ResponseHandler(server.CreateUserHandler)).Methods("POST")
 	mx.Handle("/login", ResponseHandler(server.UserLoginHandler)).Methods("POST")
 	mx.Handle("/{email}/createblog", ResponseHandler(server.CreateBlogHandler)).Methods("POST")

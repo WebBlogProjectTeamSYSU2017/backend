@@ -6,14 +6,12 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/WebBlogProjectTeamSYSU2017/backend/lib"
 	"github.com/WebBlogProjectTeamSYSU2017/backend/model"
 
 	"github.com/gorilla/mux"
-	"github.com/unrolled/render"
 )
 
 //CreateUserRequest 用于创建网站用户请求
@@ -53,21 +51,6 @@ type PublicBlogsResponse struct {
 	Title       string `json:"title"`
 	Content     string `json:"content"`
 	Tag         string `json:"tag"`
-}
-
-//AddHandler 用于测试
-func AddHandler(w http.ResponseWriter, req *http.Request) {
-	formatter := render.New(render.Options{
-		IndentJSON: true,
-	})
-	vars := mux.Vars(req)
-	id1 := vars["id1"]
-	id2 := vars["id2"]
-	id_1, _ := strconv.Atoi(id1)
-	id_2, _ := strconv.Atoi(id2)
-	id := id_1 + id_2
-	id_str := strconv.Itoa(id)
-	formatter.JSON(w, http.StatusOK, struct{ Test string }{id1 + " + " + id2 + " = " + id_str})
 }
 
 //DeleteBlogHandler 提供删除博客服务
